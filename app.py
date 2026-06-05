@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, jsonify
+import requests
 import sqlite3
 
 app = Flask(__name__)
@@ -44,7 +45,35 @@ def delete_expense(id):
     conn.commit()
     conn.close()
     return redirect('/')
-
+@app.route('/suggest-category', methods=['POST'])
+def suggest_category():
+    try:
+        title = request.json.get('title', '')
+        
+        url = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}'
+        
+        payload = {
+            "contents": [{
+                "parts": [{
+                    "text": f'You are an expense categorizer. Given this expense title: "{title}", reply with ONLY one word from this list: Food, Transport, Study, Entertainment, Other. No explanation, just the single category word.'
+                }]
+            }]
+        }
+        
+        response = requests.post(url, json=payload)
+        print("STATUS:", response.status_code)
+        print("RESPONSE:", response.text)
+        data = response.json()
+        category = data['candidates'][0]['content']['parts'][0]['text'].strip()
+        
+        if category not in ['Food', 'Transport', 'Study', 'Entertainment', 'Other']:
+            category = 'Other'
+        
+        return jsonify({'category': category})
+    
+    except Exception as e:
+        print("ERROR:", str(e))
+        return jsonify({'category': 'Other', 'error': str(e)})
 if __name__ == '__main__':
     init_db()
     app.run(debug=True)

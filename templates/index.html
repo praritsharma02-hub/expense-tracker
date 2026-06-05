@@ -43,7 +43,8 @@
                             <option>Other</option>
                         </select>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100">Add Expense</button>
+                    <button type="button" class="btn btn-outline-secondary w-100 mb-2" onclick="suggestCategory()">✨ AI Suggest Category</button>
+<button type="submit" class="btn btn-primary w-100">Add Expense</button>
                 </form>
             </div>
         </div>
@@ -83,6 +84,34 @@
 
     </div>
 </div>
-
+<script>
+function suggestCategory() {
+    const title = document.querySelector('input[name="title"]').value;
+    if (!title) {
+        alert('Please enter an expense title first');
+        return;
+    }
+    
+    const btn = document.querySelector('.btn-outline-secondary');
+    btn.textContent = '⏳ Thinking...';
+    btn.disabled = true;
+    
+    fetch('/suggest-category', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({title: title})
+    })
+    .then(r => r.json())
+    .then(data => {
+        document.querySelector('select[name="category"]').value = data.category;
+        btn.textContent = '✨ AI Suggest Category';
+        btn.disabled = false;
+    })
+    .catch(() => {
+        btn.textContent = '✨ AI Suggest Category';
+        btn.disabled = false;
+    });
+}
+</script>
 </body>
 </html>
